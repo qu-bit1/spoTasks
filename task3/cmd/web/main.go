@@ -1,70 +1,45 @@
 package main
 
 import (
-	"database/sql"
+	"fmt"
+	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/qu-bit1/spoTask/tree/main/task3/pkg/store"
 	"log"
+	"strconv"
 )
 
 func main() {
 
-	type User struct {
-		ID       int64  `json:"id"`
-		Username string `json:"username"`
-		Password string `json:"password"`
-	}
+	// creating a database connection
+	// Conn function made in store.go
+	db := store.Conn()
 
-	func main() {
-		router := gin.Default()
+	r := gin.Default()
 
-		// Set up MySQL connection
-		db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/signup")
+	// making a post request
+	r.POST("/signup", func(c *gin.Context) {
+
+		id := c.PostForm("id")
+		// post form returns a string value
+		// so we convert string to int using parseint
+		i, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("id = %v", i)
+		password := c.PostForm("pwd")
+		fmt.Printf("id: %d; password: %s", i, password)
+		_, err = db.Exec("INSERT INTO users(userID,pwd) values(?,?)", i, password)
 		if err != nil {
 			log.Fatal(err)
 		}
-		defer db.Close()
 
-		// Create users table if it doesn't exist
-		_, err = db.Exec(`CREATE TABLE IF NOT EXISTS users (
-		id INT AUTO_INCREMENT PRIMARY KEY,
-		username VARCHAR(50) UNIQUE,
-		password VARCHAR(100)
-	)`)
-		if err != nil {
-			log.Fatal(err)
-		}
+	})
 
-		// Handle signup request
-		router.POST("/signup", func(c *gin.Context) {
-			var user User
-			if err := c.ShouldBindJSON(&user); err != nil {
-				c.JSON(400, gin.H{"error": "Invalid request"})
-				return
-			}
-
-			// Encrypt the password
-			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-			if err != nil {
-				c.JSON(500, gin.H{"error": "Internal server error"})
-				return
-			}
-
-			// Insert user into the database
-			_, err = db.Exec("INSERT INTO users (username, password) VALUES (?, ?)", user.Username, hashedPassword)
-			if err != nil {
-				if mysqlErr, ok := err.(*mysql.MySQLError); ok && mysqlErr.Number == 1062 {
-					// Error number 1062 indicates a duplicate entry error (username already exists)
-					c.JSON(409, gin.H{"error": "Username already exists"})
-					return
-				}
-				c.JSON(500, gin.H{"error": "Internal server error"})
-				return
-			}
-
-			c.JSON(200, gin.H{"message": "Signup successful"})
-		})
-
-		// Start the server
-		router.Run(":8080")
+	err := r.Run()
+	if err != nil {
+		return
 	}
 
 }
