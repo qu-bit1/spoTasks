@@ -1,0 +1,26 @@
+  .planet-data {
+    margin-bottom: 20px;
+  }
+  .heading {
+    text-align: center;
+    padding-bottom: 10px;  
+  }
+  .residents {
+    list-style-type: disc;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+  }
+  .films {
+    list-style-type: disc;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+
+  }
+  
+  h1{
+    text-align: center;
+  }
